@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=OpenSwarm
+Comment=Multi-agent launcher for AI coding agents
+Exec=openswarm
+Icon=openswarm
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+StartupNotify=true

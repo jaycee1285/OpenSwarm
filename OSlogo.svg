@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Minimal insect swarm silhouette logo with unified direction">
+  <defs>
+    <!-- Simple insect silhouette (no tail triangle) -->
+    <g id="bug-sil">
+      <ellipse cx="-9" cy="-4" rx="11" ry="6"/>
+      <ellipse cx="9" cy="-4" rx="11" ry="6"/>
+      <ellipse cx="0" cy="6" rx="6" ry="13"/>
+      <circle cx="0" cy="-11" r="5"/>
+    </g>
+  </defs>
+
+  <rect width="512" height="512" fill="#fff"/>
+
+  <!-- Optional badge ring -->
+  <circle cx="256" cy="256" r="228" fill="none" stroke="#000" stroke-width="10"/>
+
+  <!-- Swarm (fewer insects, unified orientation) -->
+  <!-- All insects generally facing upper-right (~25deg), with slight variation -->
+  <use href="#bug-sil" fill="#000" transform="translate(152 214) rotate(22) scale(1.10)"/>
+  <use href="#bug-sil" fill="#000" transform="translate(238 156) rotate(24) scale(0.95)"/>
+  <use href="#bug-sil" fill="#000" transform="translate(350 184) rotate(26) scale(1.00)"/>
+  <use href="#bug-sil" fill="#000" transform="translate(398 282) rotate(21) scale(1.02)"/>
+  <use href="#bug-sil" fill="#000" transform="translate(316 364) rotate(27) scale(0.94)"/>
+  <use href="#bug-sil" fill="#000" transform="translate(198 346) rotate(23) scale(0.88)"/>
+
+  <!-- Center focal insect -->
+  <use href="#bug-sil" fill="#000" transform="translate(258 258) rotate(25) scale(1.34)"/>
+</svg>

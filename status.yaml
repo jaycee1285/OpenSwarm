@@ -1,0 +1,58 @@
+repo: OpenSwarm
+status_version: 1
+last_updated: 2026-04-07
+current_objective: Keep quota telemetry work moving while improving maintainability of supervisor/session boundaries without breaking IPC compatibility.
+current_state: Session/repo catalog logic has been extracted from `server.rs` into `session_catalog.rs` with unit coverage, IPC contract tests were added, and full test validation now runs in `nix develop`; Claude quota reporting remains blocked by the `/usage` probe path.
+next_steps:
+  - Debug Claude `/usage` probe reliability in `src/supervisor/usage_poll.rs`
+  - Continue supervisor-runtime modularization from `src/supervisor/server.rs` into narrower ownership boundaries
+  - Extract shared transcript/artifact/event driver-core between Claude and Codex driver paths
+  - Add UI reducer boundary for `ServerMessage` handling in `src/ui/window.rs`
+  - Normalize usage data model boundaries across supervisor, IPC, and UI snapshots
+  - Add explicit persistence migration versioning + compatibility coverage in `src/persistence/db.rs`
+  - Tighten desktop quota-row polish only after Claude data is trustworthy
+  - Continue supervisor restart/reconnect hardening alongside refactor packets
+known_gaps:
+  - Claude usage telemetry is still unreliable
+  - mobile button state styling is functional but low-contrast
+  - mobile/tailscale e2e remains intentionally manual and un-smoked in-repo
+human_blockers:
+  - None
+manual_smoke:
+  state: partial-pass
+  source: John-confirmed mobile + Codex verification, plus local cargo check
+  last_run: 2026-03-15
+  bounds:
+    platform: Linux desktop (supervisor + GTK UI)
+    scope:
+      - mobile remote-access enablement after Tailscale cleanup
+      - mobile listener-state button feedback
+      - Codex right-panel quota rows
+    exclusions:
+      - Claude quota-path verification
+      - mobile remote e2e over tailscale/manual network setup
+      - tool approval roundtrip
+  conditions:
+    mobile_enable_no_longer_blocks_supervisor_startup: pass
+    mobile_button_listener_state_is_visible: pass
+    codex_quota_rows_render_live_values: pass
+    claude_quota_rows_render_live_values: fail
+  known_gaps:
+    - Claude `/usage` probe still fails to feed trustworthy desktop quota rows
+    - mobile state color treatment could use stronger contrast
+  next_smoke_trigger:
+    - `src/supervisor/usage_poll.rs` changes
+    - usage-status protocol changes
+    - mobile button styling/state changes
+    - right-panel quota rendering changes
+automated_validation:
+  state: pass
+  source: `nix develop -c cargo test`
+  last_run: 2026-04-07
+  rationale: Architecture refactor touched internal boundaries and protocol contracts where deterministic automated tests are a better fit than manual Human Smoke.
+  coverage:
+    - session/repo catalog extraction (`src/supervisor/session_catalog.rs`)
+    - IPC contract serialization/deserialization invariants (`src/ipc/proto.rs`)
+  results:
+    tests_passed: 50
+    tests_failed: 0

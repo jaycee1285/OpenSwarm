@@ -1,0 +1,72 @@
+{
+  description = "OpenSwarm — multi-agent launcher for AI coding agents — migrated";
+
+  # To activate:
+  #   cp flake.nix flake.nix.bak && cp flake.nix.proposed flake.nix
+  #   nix flake update config
+  # To revert:
+  #   cp flake.nix.bak flake.nix && rm flake.nix.bak
+
+  inputs = {
+    config.url = "github:jaycee1285/config";
+    nixpkgs.follows = "config/nixpkgs";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, config, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        libs = config.lib.runtimeLibs pkgs;
+        cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+        packageVersion = cargoToml.package.version;
+
+        runtimeLibs = libs.gtk4 ++ libs.openswarm-extra;
+
+        nativeBuildInputs = with pkgs; [
+          pkg-config rustc cargo wrapGAppsHook4 patchelf
+        ];
+      in
+      {
+        libs.declared = {
+          categories = [ "gtk4" "openswarm-extra" ];
+          local = [];
+        };
+
+        devShells.default = pkgs.mkShell {
+          inherit nativeBuildInputs;
+          buildInputs = runtimeLibs;
+
+          shellHook = ''
+            export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.adwaita-icon-theme}/share:$XDG_DATA_DIRS"
+            export GTK_THEME=Adwaita
+            echo "OpenSwarm dev shell (migrated to config-canary shared libs)"
+          '';
+        };
+
+        packages.default = pkgs.rustPlatform.buildRustPackage {
+          pname = "openswarm";
+          version = packageVersion;
+          src = ./.;
+          cargoHash = "";
+
+          buildInputs = runtimeLibs;
+          inherit nativeBuildInputs;
+
+          postInstall = ''
+            install -Dm644 ${./packaging/linux/openswarm.desktop} \
+              $out/share/applications/openswarm.desktop
+            substituteInPlace $out/share/applications/openswarm.desktop \
+              --replace-fail 'Exec=openswarm' "Exec=$out/bin/openswarm"
+
+            mkdir -p $out/share/icons
+            cp -r ${./icons/linux/hicolor} $out/share/icons/
+          '';
+
+          postFixup = ''
+            wrapProgram $out/bin/openswarm \
+              --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}"
+          '';
+        };
+      });
+}

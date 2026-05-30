@@ -1,0 +1,73 @@
+{
+  description = "OpenSwarm — multi-agent launcher for AI coding agents";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+        packageVersion = cargoToml.package.version;
+
+        buildInputs = with pkgs; [
+          gtk4
+          vte-gtk4
+          glib
+          pango
+          gdk-pixbuf
+          cairo
+          graphene
+          harfbuzz
+          gsettings-desktop-schemas
+          adwaita-icon-theme
+        ];
+
+        nativeBuildInputs = with pkgs; [
+          pkg-config
+          rustc
+          cargo
+          wrapGAppsHook4
+          patchelf  # release.sh strips Nix store paths for cross-machine portability
+        ];
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          inherit buildInputs nativeBuildInputs;
+
+          shellHook = ''
+            export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.adwaita-icon-theme}/share:$XDG_DATA_DIRS"
+            export GTK_THEME=Adwaita
+          '';
+        };
+
+        packages.default = pkgs.rustPlatform.buildRustPackage {
+          pname = "openswarm";
+          version = packageVersion;
+          src = ./.;
+          cargoLock.lockFile = ./Cargo.lock;
+
+          inherit buildInputs;
+          nativeBuildInputs = nativeBuildInputs;
+
+          postInstall = ''
+            install -Dm644 ${./packaging/linux/openswarm.desktop} \
+              $out/share/applications/openswarm.desktop
+            substituteInPlace $out/share/applications/openswarm.desktop \
+              --replace-fail 'Exec=openswarm' "Exec=$out/bin/openswarm"
+
+            mkdir -p $out/share/icons
+            cp -r ${./icons/linux/hicolor} $out/share/icons/
+          '';
+
+          postFixup = ''
+            wrapProgram $out/bin/openswarm \
+              --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}"
+          '';
+        };
+      }
+    );
+}

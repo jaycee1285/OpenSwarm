@@ -1,0 +1,29 @@
+/target
+result
+.direnv
+
+# Claude Code agent artifacts
+.claude/
+**/CLAUDE.md
+!CLAUDE.md
+
+# Nix
+result-*
+.direnv/
+
+# Release artifacts
+*.tar.xz
+*.tar.gz
+*.xpi
+
+# OS (cross-platform safety)
+.DS_Store
+Thumbs.db
+
+*.md
+*.xz
+clicks
+kept
+leads
+scheduled
+scripts/transcript-to-md.js
